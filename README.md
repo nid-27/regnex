@@ -240,3 +240,49 @@ For issues or questions:
 ---
 
 Built with ❤️ using Agno Framework and AI
+
+
+## Datasets Used
+
+### 1. Financial PhraseBank v1.0  
+**Source:**  
+Malo, P., Sinha, A., Korhonen, P., Wallenius, J., & Takala, P. (2014).  
+*Good debt or bad debt: Detecting semantic orientations in economic texts.*  
+*Journal of the Association for Information Science and Technology, 65(4), 782–796.*
+
+**Dataset Link:**  
+➡️ [Financial PhraseBank on Kaggle](https://www.kaggle.com/datasets/ankurzing/sentiment-analysis-for-financial-news)
+
+**Description:**  
+A collection of ~4,800 human-annotated financial sentences labeled as **positive**, **neutral**, or **negative** based on their expected impact on stock prices.  
+For this project, we use the **“50% agreement” subset** (`Sentences_50Agree.txt`) to provide broad coverage for financial sentiment analysis.
+
+---
+
+### 2. Stock Market Data (2015–2024)  
+**Source:**  
+Marjanovic, B. (2024). *Price and volume data for all US stocks and ETFs (2015–2024).*  
+Published on Kaggle.
+
+**Dataset Link:**  
+➡️ [Stock Market Data on Kaggle](https://www.kaggle.com/datasets/borismarjanovic/price-volume-data-for-all-us-stocks-etfs)
+
+**Description:**  
+Daily stock price and trading volume data for US equities and ETFs from 2015–2024.  
+For this project, data from **two selected companies** is used to simulate the daily market data processing pipeline.
+
+---
+
+### Usage Summary
+| Agent | Dataset | Role |
+|--------|----------|------|
+| **FinancialDocAgent** | Financial PhraseBank (50% subset) | Reads financial text and extracts sentiment |
+| **DailyDataAgent** | Stock Market Data (2 selected tickers) | Processes daily price and volume data |
+| **LeaderAgent** | — | Coordinates outputs and synthesizes insights |
+
+---
+
+### ⚠️ Licensing
+Both datasets are available on **Kaggle** for **non-commercial, academic, and research use**.  
+Please review individual dataset pages for detailed license terms before redistribution.
+
