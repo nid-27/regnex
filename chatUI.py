@@ -48,9 +48,9 @@ def setup_system(finance_path, csv_path):
         finance_path = "financeAgent/data"
     if not csv_path:
         csv_path = "csvAgent/data"
-    
+
     success, message = initialize_system(finance_path, csv_path)
-    
+
     if success:
         return f"✅ {message}", gr.update(interactive=True)
     else:
@@ -63,28 +63,62 @@ def process_query(query, history):
         history.append({"role": "user", "content": query})
         history.append({"role": "assistant", "content": "Please enter a valid query."})
         return history
-    
+
     # Add user message
     history.append({"role": "user", "content": query})
-    
+
     # Add loading message
     history.append({"role": "assistant", "content": "Processing."})
     yield history
-    
+
     # Animate dots
     for i in range(1, 8):
         dots = "." * ((i % 3) + 1)
         history[-1]["content"] = f"Processing{dots}"
         yield history
         time.sleep(0.3)
-    
+
     # Get response from agents
     try:
         response = ask_agents(query)
-        history[-1]["content"] = response
+
+        # Format the response for display
+        if isinstance(response, dict):
+            if "error" in response:
+                formatted_response = f"❌ {response['error']}"
+            else:
+                formatted_response = f"""
+📊 **Query Analysis & Decomposition**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Original Query:** {response.get('query', 'N/A')}
+
+**Sub-Queries Generated:**
+- 📈 **CSV Sub-Query:** {response.get('csv_subquery', 'N/A')}
+- 📄 **Finance Sub-Query:** {response.get('finance_subquery', 'N/A')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**📈 CSV Agent Response:**
+{response.get('csv_agent_response', 'No response')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**📄 Finance Agent Response:**
+{response.get('finance_agent_response', 'No response')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🎯 Team Leader Final Answer:**
+{response.get('team_leader_final_answer', 'No response')}
+"""
+        else:
+            formatted_response = response
+
+        history[-1]["content"] = formatted_response
     except Exception as e:
-        history[-1]["content"] = f"Error: {str(e)}"
-    
+        history[-1]["content"] = f"❌ Error: {str(e)}"
+
     yield history
 
 
@@ -95,43 +129,44 @@ def clear_chat():
 
 # Create Gradio Interface
 with gr.Blocks(css=custom_css, title="Multi-Agent Financial Analysis") as demo:
-    
+
     # Header
-    gr.HTML("""
+    gr.HTML(
+        """
         <div class="header">
             <h1>🤖 Multi-Agent Financial Analysis System</h1>
             <p>Powered by Finance Document Expert & CSV Data Analyst</p>
         </div>
-    """)
-    
+    """
+    )
+
     with gr.Row():
         with gr.Column(scale=1):
             # Setup Section
             gr.Markdown("### 🔧 System Setup")
-            
+
             finance_dir = gr.Textbox(
                 label="Finance Data Directory",
                 value="financeAgent/data",
                 placeholder="Path to finance text files",
-                info="Directory containing .txt files with financial documents"
+                info="Directory containing .txt files with financial documents",
             )
-            
+
             csv_dir = gr.Textbox(
                 label="CSV Data Directory",
                 value="csvAgent/data",
                 placeholder="Path to CSV files",
-                info="Directory containing .csv files with financial data"
+                info="Directory containing .csv files with financial data",
             )
-            
+
             setup_btn = gr.Button("🚀 Initialize System", variant="primary")
             status_output = gr.Textbox(
-                label="System Status",
-                interactive=False,
-                lines=3
+                label="System Status", interactive=False, lines=3
             )
-            
+
             # Info Section
-            gr.Markdown("""
+            gr.Markdown(
+                """
             ### 📋 How to Use
             1. **Setup**: Click 'Initialize System' to load data
             2. **Query**: Ask questions about financial documents or CSV data
@@ -142,66 +177,53 @@ with gr.Blocks(css=custom_css, title="Multi-Agent Financial Analysis") as demo:
             - "Analyze the revenue trends in the CSV data"
             - "Compare document insights with actual data patterns"
             - "For 2005-03-11 data, can you tell if agreed, neutral or negative"
-            """)
-        
+            """
+            )
+
         with gr.Column(scale=2):
             # Chat Interface
             gr.Markdown("### 💬 Chat with Agents")
-            
+
             chatbot = gr.Chatbot(
-                height=500,
-                show_label=False,
-                show_copy_button=True,
-                type="messages"
+                height=500, show_label=False, show_copy_button=True, type="messages"
             )
-            
+
             with gr.Row():
                 query_input = gr.Textbox(
                     label="Your Query",
                     placeholder="Ask about financial documents or data analysis...",
                     scale=4,
-                    interactive=False
+                    interactive=False,
                 )
                 submit_btn = gr.Button("Send", variant="primary", scale=1)
-            
+
             with gr.Row():
                 clear_btn = gr.Button("🗑️ Clear Chat", size="sm")
-                
-            gr.Markdown("""
+
+            gr.Markdown(
+                """
             <div style="text-align: center; margin-top: 20px; color: #666;">
                 <small>The agents will analyze your query and provide insights from both documents and CSV data.</small>
             </div>
-            """)
-    
+            """
+            )
+
     # Event Handlers
     setup_btn.click(
         fn=setup_system,
         inputs=[finance_dir, csv_dir],
-        outputs=[status_output, query_input]
+        outputs=[status_output, query_input],
     )
-    
+
     submit_btn.click(
-        fn=process_query,
-        inputs=[query_input, chatbot],
-        outputs=[chatbot]
-    ).then(
-        fn=lambda: "",
-        outputs=[query_input]
-    )
-    
+        fn=process_query, inputs=[query_input, chatbot], outputs=[chatbot]
+    ).then(fn=lambda: "", outputs=[query_input])
+
     query_input.submit(
-        fn=process_query,
-        inputs=[query_input, chatbot],
-        outputs=[chatbot]
-    ).then(
-        fn=lambda: "",
-        outputs=[query_input]
-    )
-    
-    clear_btn.click(
-        fn=clear_chat,
-        outputs=[chatbot]
-    )
+        fn=process_query, inputs=[query_input, chatbot], outputs=[chatbot]
+    ).then(fn=lambda: "", outputs=[query_input])
+
+    clear_btn.click(fn=clear_chat, outputs=[chatbot])
 
 
 if __name__ == "__main__":
@@ -210,10 +232,5 @@ if __name__ == "__main__":
     print("   - financeAgent/data/ for .txt files")
     print("   - csvAgent/data/ for .csv files")
     print("\n🌐 Launching Gradio interface...")
-    
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False,
-        show_error=True
-    )
+
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, show_error=True)
